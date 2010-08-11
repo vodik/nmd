@@ -160,43 +160,40 @@ scanning(struct iw_mngr *mngr)
 		exit(EXIT_FAILURE);
 	}
 
-	while (1) {
 realloc:
-		newbuf = realloc(buffer, buflen);
-		if (newbuf == NULL) {
-			if (buffer)
-				free(buffer);
-			perror("realloc");
-			exit(EXIT_FAILURE);
-		}
-		buffer = newbuf;
+	newbuf = realloc(buffer, buflen);
+	if (newbuf == NULL) {
+		if (buffer)
+			free(buffer);
+		perror("realloc");
+		exit(EXIT_FAILURE);
+	}
+	buffer = newbuf;
 
-		wrq.u.data.pointer = buffer;
-		wrq.u.data.flags = 0;
-		wrq.u.data.length = buflen;
+	wrq.u.data.pointer = buffer;
+	wrq.u.data.flags = 0;
+	wrq.u.data.length = buflen;
 
 iw_get_ext:
-		if (iw_get_ext(mngr->skfd, mngr->ifname, SIOCGIWSCAN, &wrq) < 0) {
-			if (errno == EAGAIN) {
-				timeout -= wait;
-				if (timeout > 0) {
-					usleep(wait);
-					goto iw_get_ext;
-				}
+	if (iw_get_ext(mngr->skfd, mngr->ifname, SIOCGIWSCAN, &wrq) < 0) {
+		if (errno == EAGAIN) {
+			timeout -= wait;
+			if (timeout > 0) {
+				usleep(wait);
+				goto iw_get_ext;
 			}
-			else if (errno == E2BIG && range.we_version_compiled > 16) {
-				if (wrq.u.data.length > buflen)
-					buflen = wrq.u.data.length;
-				else
-					buflen *= 2;
-				goto realloc;
-			}
+		}
+		else if (errno == E2BIG && range.we_version_compiled > 16) {
+			if (wrq.u.data.length > buflen)
+				buflen = wrq.u.data.length;
+			else
+				buflen *= 2;
+			goto realloc;
+		}
 
-			free(buffer);
-			perror("iw_get_ext");
-			exit(EXIT_FAILURE);
-		} else
-			break;
+		free(buffer);
+		perror("iw_get_ext");
+		exit(EXIT_FAILURE);
 	}
 
 	if (wrq.u.data.length) {
