@@ -2,11 +2,18 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
 #include <net/if.h>
+#include <iwlib.h>
 
-#define _PATH_PROCNET_DEV "/proc/net/dev"
+#define _PATH_PROCNET_DEV       "/proc/net/dev"
+#define _PATH_PROCNET_WIRELESS  "/proc/net/wireless"
+
+/*struct wireless_info {
+	bool has_range;
+};*/
 
 static struct interface *head = NULL, *tail = NULL;
 
@@ -46,12 +53,12 @@ get_name(char *name, char *p)
 		if (isspace(*p))
 			break;
 
-		if (*p == ':') {	/* could be an alias */
+		if (*p == ':') {
 			char *dot = p, *dotname = name;
 			*name++ = *p++;
 			while (isdigit(*p))
 				*name++ = *p++;
-			if (*p != ':') {	/* it wasn't, backup */
+			if (*p != ':') {
 				p = dot;
 				name = dotname;
 			}
@@ -64,6 +71,50 @@ get_name(char *name, char *p)
 	}
 	*name++ = '\0';
 	return p;
+}
+
+static int
+get_info(int skfd, char *ifname)
+{
+	struct wireless_info *info = malloc(sizeof(struct wireless_info));
+
+	struct iwreq wrq;
+	memset(info, 0, sizeof(struct wireless_info));
+
+	if (iw_get_basic_config(skfd, ifname, &(info->b)) < 0) {
+		struct ifreq ifr;
+		strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+		if (ioctl(skfd, SIOCGIFFLAGS, &ifr) < 0)
+			return -ENODEV;
+		else
+			return -ENOTSUP;
+	}
+
+	printf("wireless extension on %s!\n", ifname);
+
+	if (iw_get_range_info(skfd, ifname, &(info->range)) >= 0)
+		info->has_range = 1;
+	
+	if (iw_get_ext(skfd, ifname, SIOCGIWAP, &wrq) >= 0) {
+		info->has_ap_addr = 1;
+		memcpy(&info->ap_addr, &wrq.u.ap_addr, sizeof(sockaddr));
+	}
+
+	if (iw_get_ext(skfd, ifname, SIOCGIWRATE, &wrq) >= 0) {
+		info->has_bitrate = 1;
+		memcpy(&info->bitrate, &wrq.u.bitrate, sizeof(iwparam));
+	}
+
+	wrq.u.power.flags = 0;
+	if (iw_get_ext(skfd, ifname, SIOCGIWPOWER, &wrq) >= 0) {
+		info->has_power = 1;
+		memcpy(&info->power, &wrq.u.power, sizeof(iwparam));
+	}
+
+	if (iw_get_stats(skfd, ifname, &info->stats, &info->range, info->has_range) >= 0)
+		info->has_stats = 1;
+	
+	return 0;
 }
 
 void
@@ -85,6 +136,10 @@ detect_interfaces()
 
 		s = get_name(name, buf);
 		add_interface(name);
+
+		/* TODO: consoldate: */
+		int skfd = iw_sockets_open();
+		get_info(skfd, name);
 		//get_dev_fields(s, ife);
 		//ife->statistics_valid = 1;
 	}

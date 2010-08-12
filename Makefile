@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Werror -pedantic -std=gnu99 -O2
+CFLAGS = -Wall -Werror -pedantic -std=gnu99 -O0 -g
 LDFLAGS = -lpthread -liw
 
 #SRC = wireless.c scanning.c nmd.c
