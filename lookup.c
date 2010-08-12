@@ -154,6 +154,7 @@ lookup2()
 		perror(_PATH_PROCNET_DEV);
 
 	fclose(fh);
+	return 0;
 }
 
 int
@@ -251,19 +252,4 @@ realloc:
 	}
 
 	free(ifc.ifc_buf);
-}
-
-int
-main(int argc, char *argv[])
-{
-	/*if ((skfd = sockets_open(0)) < 0) {
-		perror("sockets_open");
-		exit(EXIT_FAILURE);
-	}
-
-	if (argc == 2)
-		return if_print(argv[1]);
-	else
-		return if_print(NULL);*/
-	lookup2();
 }

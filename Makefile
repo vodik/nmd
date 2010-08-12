@@ -3,7 +3,7 @@ CFLAGS = -Wall -Werror -pedantic -std=gnu99 -O2
 LDFLAGS = -lpthread -liw
 
 #SRC = wireless.c scanning.c nmd.c
-SRC = nmd.c
+SRC = nmd.c lookup.c
 OBJ = ${SRC:.c=.o}
 
 all: nmd
