@@ -11,10 +11,6 @@
 #define _PATH_PROCNET_DEV       "/proc/net/dev"
 #define _PATH_PROCNET_WIRELESS  "/proc/net/wireless"
 
-/*struct wireless_info {
-	bool has_range;
-};*/
-
 static struct interface *head = NULL, *tail = NULL;
 
 static struct interface *
@@ -29,6 +25,7 @@ add_interface(const char *name)
 
 	node = malloc(sizeof(struct interface));
 	strncpy(node->name, name, IFNAMSIZ);
+	node->wi = NULL;
 
 	if (head == NULL) {
 		head = node;
@@ -74,45 +71,51 @@ get_name(char *name, char *p)
 }
 
 static int
-get_info(int skfd, char *ifname)
+get_info(int skfd, struct interface *iface)
 {
-	struct wireless_info *info = malloc(sizeof(struct wireless_info));
+	struct wireless_config b;
 
-	struct iwreq wrq;
-	memset(info, 0, sizeof(struct wireless_info));
-
-	if (iw_get_basic_config(skfd, ifname, &(info->b)) < 0) {
+	if (iw_get_basic_config(skfd, iface->name, &b) < 0) {
 		struct ifreq ifr;
-		strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+		strncpy(ifr.ifr_name, iface->name, IFNAMSIZ);
 		if (ioctl(skfd, SIOCGIFFLAGS, &ifr) < 0)
 			return -ENODEV;
 		else
 			return -ENOTSUP;
 	}
 
-	printf("wireless extension on %s!\n", ifname);
+	struct iwreq wrq;
+	iface->wi = malloc(sizeof(struct wi_info));
 
-	if (iw_get_range_info(skfd, ifname, &(info->range)) >= 0)
-		info->has_range = 1;
+	if (iw_get_range_info(skfd, iface->name, &iface->wi->range) >= 0)
+		iface->wi->has_range = true;
 	
-	if (iw_get_ext(skfd, ifname, SIOCGIWAP, &wrq) >= 0) {
-		info->has_ap_addr = 1;
-		memcpy(&info->ap_addr, &wrq.u.ap_addr, sizeof(sockaddr));
+	if (iw_get_ext(skfd, iface->name, SIOCGIWAP, &wrq) >= 0) {
+		iface->wi->has_ap_addr = true;
+		memcpy(&iface->wi->ap_addr, &wrq.u.ap_addr, sizeof(sockaddr));
 	}
 
-	if (iw_get_ext(skfd, ifname, SIOCGIWRATE, &wrq) >= 0) {
-		info->has_bitrate = 1;
-		memcpy(&info->bitrate, &wrq.u.bitrate, sizeof(iwparam));
+	if (iw_get_ext(skfd, iface->name, SIOCGIWRATE, &wrq) >= 0) {
+		iface->wi->has_bitrate = true;
+		memcpy(&iface->wi->bitrate, &wrq.u.bitrate, sizeof(iwparam));
 	}
 
 	wrq.u.power.flags = 0;
-	if (iw_get_ext(skfd, ifname, SIOCGIWPOWER, &wrq) >= 0) {
-		info->has_power = 1;
-		memcpy(&info->power, &wrq.u.power, sizeof(iwparam));
+	if (iw_get_ext(skfd, iface->name, SIOCGIWPOWER, &wrq) >= 0) {
+		iface->wi->has_power = true;
+		memcpy(&iface->wi->power, &wrq.u.power, sizeof(iwparam));
 	}
 
-	if (iw_get_stats(skfd, ifname, &info->stats, &info->range, info->has_range) >= 0)
-		info->has_stats = 1;
+	if (iw_get_stats(skfd, iface->name, &iface->wi->stats, &iface->wi->range, iface->wi->has_range) >= 0)
+		iface->wi->has_stats = true;
+
+	wrq.u.essid.pointer = (caddr_t)iface->wi->essid;
+	wrq.u.essid.length = IW_ESSID_MAX_SIZE + 1;
+	wrq.u.essid.flags = 0;
+	if(iw_get_ext(skfd, iface->name, SIOCGIWNICKN, &wrq) >= 0)
+		if(wrq.u.data.length > 1)
+			iface->wi->has_essid = 1;
+	printf("%s\n", b.essid);
 	
 	return 0;
 }
@@ -135,13 +138,11 @@ detect_interfaces()
 		char *s, name[IFNAMSIZ];
 
 		s = get_name(name, buf);
-		add_interface(name);
+		struct interface *iface = add_interface(name);
 
 		/* TODO: consoldate: */
 		int skfd = iw_sockets_open();
-		get_info(skfd, name);
-		//get_dev_fields(s, ife);
-		//ife->statistics_valid = 1;
+		get_info(skfd, iface);
 	}
 	if (ferror(fh))
 		perror(_PATH_PROCNET_DEV);
