@@ -87,6 +87,11 @@ get_info(int skfd, struct interface *iface)
 	struct iwreq wrq;
 	iface->wi = malloc(sizeof(struct wi_info));
 
+	/* basic info here */
+	if ((iface->wi->has_essid = b.has_essid))
+		strncpy(iface->wi->essid, b.essid, IW_ESSID_MAX_SIZE + 1);
+
+	/* extended info here */
 	if (iw_get_range_info(skfd, iface->name, &iface->wi->range) >= 0)
 		iface->wi->has_range = true;
 	
@@ -115,7 +120,6 @@ get_info(int skfd, struct interface *iface)
 	if(iw_get_ext(skfd, iface->name, SIOCGIWNICKN, &wrq) >= 0)
 		if(wrq.u.data.length > 1)
 			iface->wi->has_essid = 1;
-	printf("%s\n", b.essid);
 	
 	return 0;
 }
