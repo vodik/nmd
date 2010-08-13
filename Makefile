@@ -2,8 +2,7 @@ CC = gcc
 CFLAGS = -Wall -Werror -pedantic -std=gnu99 -O0 -g
 LDFLAGS = -lpthread -liw
 
-#SRC = wireless.c scanning.c nmd.c
-SRC = nmd.c interfaces.c
+SRC = nmd.c interfaces.c scanning.c
 OBJ = ${SRC:.c=.o}
 
 all: nmd

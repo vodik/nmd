@@ -88,8 +88,10 @@ get_info(int skfd, struct interface *iface)
 	iface->wi = malloc(sizeof(struct wi_info));
 
 	/* basic info here */
-	if ((iface->wi->has_essid = b.has_essid))
+	if ((iface->wi->has_essid = b.has_essid)) {
+		iface->wi->essid_on = b.essid_on;
 		strncpy(iface->wi->essid, b.essid, IW_ESSID_MAX_SIZE + 1);
+	}
 
 	/* extended info here */
 	if (iw_get_range_info(skfd, iface->name, &iface->wi->range) >= 0)

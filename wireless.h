@@ -7,6 +7,7 @@
 struct wi_info {
 	bool has_sens : 1;
 	bool has_essid : 1;
+	bool essid_on : 1;
 	bool has_nickname : 1;
 	bool has_ap_addr : 1;
 	bool has_bitrate : 1;
