@@ -13,6 +13,60 @@
 
 static struct interface *head = NULL, *tail = NULL;
 
+///////////////////////////////////////////////////////////////////////////
+
+static inline void
+set_flag(int skfd, char *ifname, short flag)
+{
+	struct ifreq ifr;
+
+	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+	if (ioctl(skfd, SIOCGIFFLAGS, &ifr) < 0) {
+		perror("ioctl SIOCGIFFLAGS");
+		exit(EXIT_FAILURE);
+	}
+	ifr.ifr_flags |= flag;
+	if (ioctl(skfd, SIOCSIFFLAGS, &ifr) < 0){
+		perror("ioctl SIOCSIFFLAGS");
+		exit(EXIT_FAILURE);
+	}
+}
+
+static inline void
+clr_flag(int skfd, char *ifname, short flag)
+{
+	struct ifreq ifr;
+
+	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+	if (ioctl(skfd, SIOCGIFFLAGS, &ifr) < 0) {
+		perror("ioctl SIOCGIFFLAGS");
+		exit(EXIT_FAILURE);
+	}
+	ifr.ifr_flags &= ~flag;
+	if (ioctl(skfd, SIOCSIFFLAGS, &ifr) < 0){
+		perror("ioctl SIOCSIFFLAGS");
+		exit(EXIT_FAILURE);
+	}
+}
+
+///////////////////////////////////////////////////////////////////////////
+
+void
+iface_up(struct interface *iface)
+{
+	int skfd = iw_sockets_open();
+	set_flag(skfd, iface->name, IFF_UP | IFF_RUNNING);
+}
+
+void
+iface_down(struct interface *iface)
+{
+	int skfd = iw_sockets_open();
+	clr_flag(skfd, iface->name, IFF_UP);
+}
+
+///////////////////////////////////////////////////////////////////////////
+
 static struct interface *
 add_interface(const char *name)
 {
@@ -156,7 +210,7 @@ detect_interfaces()
 	fclose(fh);
 }
 
-const struct interface *
+struct interface *
 get_interfaces()
 {
 	if (!head)

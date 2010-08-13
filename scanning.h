@@ -13,6 +13,6 @@ struct wi_network {
 	char essid[IW_ESSID_MAX_SIZE + 1];
 };
 
-const struct wi_network *scan(const char *ifname);
+struct wi_network *scan(const char *ifname);
 
 #endif

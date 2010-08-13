@@ -12,6 +12,9 @@ struct interface {
 	struct wi_info *wi;
 };
 
-const struct interface *get_interfaces();
+struct interface *get_interfaces();
+
+void iface_up(struct interface *iface);
+void iface_down(struct interface *iface);
 
 #endif

@@ -4,11 +4,6 @@
 #include <stdio.h>
 #include <iwlib.h>
 
-struct wi_network *head = NULL, *tail = NULL;
-
-/*struct iw_networks {
-};*/
-
 struct wi_scanning_data {
 	struct stream_descr stream;
 	struct iw_event event;
@@ -16,6 +11,8 @@ struct wi_scanning_data {
 	struct iw_range *iw_range;
 	int has_range;
 };
+
+struct wi_network *head = NULL, *tail = NULL;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -70,7 +67,7 @@ collect_scanning_token(struct wi_network *node, struct wi_scanning_data *d)
 				/* TODO: complete */
 			} else {
 				/* TODO: hidden */
-			}
+			};
 			break;
 		case SIOCGIWENCODE:
 			break;
@@ -88,7 +85,7 @@ collect_scanning_token(struct wi_network *node, struct wi_scanning_data *d)
 	return node;
 }
 
-const struct wi_network *
+struct wi_network *
 scan(const char *ifname)
 {
 	struct iwreq wrq;
