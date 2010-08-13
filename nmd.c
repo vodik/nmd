@@ -1,8 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "interfaces.h"
-#include "scanning.h"
+#include "nmd.h"
 
 int
 main(int argc, char *argv[])
@@ -20,26 +19,20 @@ main(int argc, char *argv[])
 				printf("; not connected\n");
 
 			printf(" - scanning for networks on %s...\n", ife->name);
+			struct wi_network *sndcup = NULL;
 			ntwk = scan(ife->name);
-			for (; ntwk; ntwk = ntwk->next)
+			for (; ntwk; ntwk = ntwk->next) {
+				if (strcmp(ntwk->essid, "Second Cup") == 0)
+					sndcup = ntwk;
 				printf("     %s -> %s\n", ntwk->bssid, ntwk->essid);
+			}
+
+			if (sndcup) {
+				printf("attempting to connect to %s!\n", sndcup->essid);
+				network_disconnect(ife);
+				network_connect(ife, sndcup);
+			}
 		}
 	}
-
-	if (argc == 2) {
-		ife = get_interfaces();
-		for (; ife; ife = ife->next)
-			if (strcmp(ife->name, "eth0") == 0)
-				break;
-
-		if (strcmp(argv[1], "up") == 0) {
-			printf("bringing up %s\n", ife->name);
-			iface_up(ife);
-		} else if (strcmp(argv[1], "down") == 0) {
-			printf("bringing down %s\n", ife->name);
-			iface_down(ife);
-		}
-	}
-
 	return 0;
 }
