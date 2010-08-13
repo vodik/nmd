@@ -2,15 +2,16 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include "commands.h"
 
 void
 network_disconnect(struct interface* iface)
 {
 	printf("disconnecting on %s...\n", iface->name);
 
+	dhcp_release(iface->name);
 	iface_down(iface);
-	/*dhcp_release(iface);
-	iface_ip_reset(iface);*/
+	/*iface_ip_reset(iface);*/
 }
 
 void

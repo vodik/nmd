@@ -2,7 +2,7 @@ CC = clang
 CFLAGS = -Wall -Werror -pedantic -std=gnu99 -O0 -g
 LDFLAGS = -lpthread -liw
 
-SRC = nmd.c interfaces.c scanning.c connect.c
+SRC = nmd.c interfaces.c scanning.c connect.c commands.c
 OBJ = ${SRC:.c=.o}
 
 all: nmd
