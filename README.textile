@@ -1,0 +1,5 @@
+h1. NMD
+
+By Simon Gomizelj
+
+NMD is yet another wireless manager built in the likeness of WICD.
