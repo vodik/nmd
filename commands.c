@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 static void
 run(const char *command, char *const argv[])
@@ -15,6 +16,8 @@ run(const char *command, char *const argv[])
 		exit(EXIT_FAILURE);
 	} else if (pid == 0)
 		execv(command, argv);
+	else
+		wait(0);
 }
 
 void
