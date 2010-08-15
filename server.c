@@ -67,7 +67,7 @@ void server_loop(struct server *s, server_cb cb)
 	while ((cfd = accept(s->fd, (struct sockaddr *)&s->addr, &addr_len)) > -1) {
 		child = fork();
 		if (child == 0) {
-			cb(0, NULL);
+			cb(cfd, NULL);
 			close(cfd);
 		}
 		close(cfd);
